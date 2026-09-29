@@ -1,0 +1,14 @@
+{
+  "name": "wsp-utils",
+  "private": true,
+  "scripts": {
+    "build": "esbuild src/content.ts src/main.ts src/popup.ts --bundle --outdir=dist && node -e \"require('fs').copyFileSync('static/popup.html','dist/popup.html')\"",
+    "typecheck": "tsc"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.270",
+    "@wppconnect/wa-js": "^4.6.0",
+    "esbuild": "^0.28.2",
+    "typescript": "^5.6.0"
+  }
+}
