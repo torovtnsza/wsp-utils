@@ -6,6 +6,7 @@ export interface Scheduled {
 }
 
 export interface State {
-  commands: Record<string, string>; // exact incoming text -> reply
+  commands: Record<string, string>; // exact incoming text -> reply (the caption if there's a file)
+  files: Record<string, { name: string; data: string; gif?: boolean }>; // command -> attached file as a data: URL; gif = send video as looping GIF
   scheduled: Scheduled[];
 }
