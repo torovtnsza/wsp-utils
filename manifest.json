@@ -3,7 +3,7 @@
   "name": "wsp-utils",
   "version": "0.1.0",
   "description": "Schedule messages and handle commands on WhatsApp Web.",
-  "permissions": ["storage"],
+  "permissions": ["storage", "unlimitedStorage"],
   "action": { "default_popup": "dist/popup.html" },
   "commands": { "_execute_action": { "suggested_key": { "default": "Alt+W" } } },
   "content_scripts": [
