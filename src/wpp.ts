@@ -2,3 +2,5 @@
 import "@wppconnect/wa-js";
 
 export const WPP = (self as unknown as { WPP: typeof import("@wppconnect/wa-js") }).WPP;
+
+WPP.config.disableGoogleAnalytics = true
