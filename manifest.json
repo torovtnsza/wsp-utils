@@ -5,6 +5,7 @@
   "description": "Schedule messages and handle commands on WhatsApp Web.",
   "permissions": ["storage"],
   "action": { "default_popup": "dist/popup.html" },
+  "commands": { "_execute_action": { "suggested_key": { "default": "Alt+W" } } },
   "content_scripts": [
     { "matches": ["https://web.whatsapp.com/*"], "js": ["dist/content.js"] },
     { "matches": ["https://web.whatsapp.com/*"], "js": ["dist/main.js"], "world": "MAIN" }
