@@ -14,6 +14,15 @@ export function startAutorespond() {
     // Our own auto-reply; stops !a -> !a loops.
     // ponytail: you can't trigger a command that's also another command's reply; track sent ids if needed
     if (msg.id.fromMe && Object.values(state.commands).includes(text)) return;
-    WPP.chat.sendTextMessage(chat, state.commands[text]).catch(console.error);
+    const reply = state.commands[text];
+    const file = state.files[text];
+    (file
+      ? WPP.chat.sendFileMessage(chat, file.data, {
+          ...(file.gif ? { type: "video", isGif: true } : { type: "auto-detect" }),
+          filename: file.name,
+          caption: reply || undefined,
+        })
+      : WPP.chat.sendTextMessage(chat, reply)
+    ).catch(console.error);
   });
 }
