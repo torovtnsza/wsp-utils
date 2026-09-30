@@ -2,7 +2,8 @@
 <meta charset="utf-8">
 <style>
   body { width: 320px; font: 13px sans-serif; padding: 8px }
-  input { width: 100%; box-sizing: border-box; margin: 2px 0 } li { margin: 2px 0 }
+  input, textarea { width: 100%; box-sizing: border-box; margin: 2px 0; font: inherit }
+  li { margin: 2px 0; white-space: pre-wrap }
 </style>
 <h4>Schedule</h4>
 <input id="chat" placeholder="Chat name (exact, as in the chat list)">
@@ -12,7 +13,7 @@
 <ul id="sched"></ul>
 <h4>Commands</h4>
 <input id="cmd" placeholder="!ping">
-<input id="reply" placeholder="pong">
+<textarea id="reply" rows="4" placeholder="pong"></textarea>
 <button id="addC">Add</button>
 <ul id="cmds"></ul>
 <script src="popup.js"></script>
