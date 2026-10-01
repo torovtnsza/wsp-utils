@@ -1,2 +1,6 @@
 node_modules
 dist
+# Agent skills and settings (Claude Code, and other agents' .agents)
+.claude/
+.agents/
+skills-lock.json

@@ -5,20 +5,23 @@
 const ICON = "button,a,input,img,[role=button],[role=link],[role=tab]";
 const MARGIN = 24; // between the panel and each side of the chat list
 const TILT = 2; // degrees the panel leans toward the cursor
+const LINE = 3; // the indicator line's width
 
 const style = document.createElement("style");
 style.textContent = `
-  #wsp-zone { position: fixed; z-index: 2147483646; display: none }
+  #wsp-zone { position: fixed; z-index: 2147483647; display: none }
   #wsp-zone::before {
-    content: ""; position: absolute; inset: 0 auto 0 0; width: 3px; border-radius: 2px;
+    content: ""; position: absolute; inset: 0 auto 0 0; width: ${LINE}px; border-radius: 2px;
     background: rgb(134 150 160 / .45); transition: background .2s, box-shadow .2s;
   }
   #wsp-zone.open::before { background: #3ee6ff; box-shadow: 0 0 6px rgb(62 230 255 / .6), 0 0 14px rgb(62 230 255 / .3) }
+  /* Cuts off everything left of the indicator line, so the panel slides out from behind it. */
+  #wsp-clip { position: fixed; inset: 0; z-index: 2147483646; overflow: hidden; pointer-events: none }
   /* The panel's transparent left padding touches the zone, so the mouse never crosses a gap. */
   #wsp-panel {
-    position: fixed; top: 16px; left: 64px; z-index: 2147483647; width: 400px; height: calc(100vh - 32px); /* until layout() fits it over the chat list */
+    position: absolute; top: 16px; left: 64px; width: 400px; height: calc(100% - 32px); /* until layout() fits it over the chat list */
     padding-left: ${MARGIN}px; visibility: hidden; pointer-events: none;
-    transform: translateX(calc(-100% - var(--left, 64px))); /* parked just off the left edge */
+    transform: translateX(calc(-100% - var(--left, 64px))); /* parked behind the line */
     transition: transform .25s cubic-bezier(.5, 0, .75, 0), visibility 0s .25s;
   }
   #wsp-panel.open {
@@ -37,16 +40,21 @@ style.textContent = `
 `;
 const zone = document.createElement("div");
 zone.id = "wsp-zone";
+const clip = document.createElement("div");
+clip.id = "wsp-clip";
 const panel = document.createElement("div");
 panel.id = "wsp-panel";
 // Loaded up front: building it on first open made that slide-in stutter.
 const frame = document.createElement("iframe");
 frame.src = chrome.runtime.getURL("dist/popup.html");
 panel.append(frame);
+clip.append(panel);
 document.head.append(style);
-document.body.append(zone, panel);
+document.body.append(zone, clip);
 
 let shown = false;
+let sticky = false; // opened from Alt+W or the toolbar: stays open until a click outside or Escape
+let editing = false; // a text field in the panel has focus (popup.ts reports it)
 
 // WhatsApp's class names are obfuscated, so the rail is found by shape: the narrow full-height
 // column under the (empty) middle of the left edge.
@@ -87,9 +95,11 @@ function layout() {
   if (bottom - top <= 80) return; // no room for a zone; the panel keeps its last (or full-height) box
   const box = { top: `${top + 12}px`, height: `${bottom - top - 24}px` };
   Object.assign(zone.style, box, { left: `${r.left + 8}px`, width: `${r.width - 8}px` });
+  const line = r.left + 8 + LINE; // the line's right edge
+  clip.style.left = `${line}px`;
   const list = findList(r);
   // Centered in the list; the left margin is the panel's transparent padding, its bridge to the zone.
-  Object.assign(panel.style, box, { left: `${r.right}px`, width: list ? `${list.width - 2 * MARGIN}px` : "" });
+  Object.assign(panel.style, box, { left: `${r.right - line}px`, width: list ? `${list.width - 2 * MARGIN}px` : "" });
   panel.style.setProperty("--left", panel.style.left);
 }
 layout();
@@ -110,19 +120,22 @@ function tilt(p?: [number, number]) {
 
 function hide() {
   tilt();
-  shown = false;
+  shown = sticky = false;
   panel.classList.remove("open");
   zone.classList.remove("open");
   if (document.activeElement === frame) frame.blur();
 }
 
-// Mouse leaving zone + panel closes it, unless you're working in it (typing, file picker, Alt+W):
-// then click outside or Escape.
+const typing = () => editing && document.activeElement === frame;
+const hovered = () => zone.matches(":hover") || panel.matches(":hover");
+
+// Mouse leaving zone + panel closes it, unless it was opened from Alt+W / the toolbar or you're in a
+// text field: then click outside or Escape.
 function leave(e: MouseEvent) {
   const to = e.relatedTarget as Node | null;
   if (to && (to === zone || panel.contains(to))) return; // moving between the two
   tilt();
-  if (shown && document.activeElement !== frame) hide();
+  if (shown && !sticky && !typing()) hide();
 }
 
 zone.addEventListener("mouseenter", show);
@@ -133,10 +146,11 @@ addEventListener("pointerdown", (e) => {
   if (shown && !panel.contains(e.target as Node) && e.target !== zone) hide();
 });
 
-// Opened from the keyboard or toolbar: focused, as if clicked into, so it stays open without the mouse.
+// Opened from the keyboard or toolbar: focused (Tab reaches the fields) and sticky, so it stays open without the mouse.
 function openFocused() {
   show();
-  frame.focus(); // Tab reaches the first field
+  sticky = true;
+  frame.focus();
 }
 
 function toggle() {
@@ -156,6 +170,11 @@ addEventListener("message", (e) => {
   if (e.data?.wspClose) hide();
   if (e.data?.wspToggle) toggle();
   if (e.data?.wspTilt) tilt(e.data.wspTilt);
+  if (typeof e.data?.wspEditing === "boolean") {
+    editing = e.data.wspEditing;
+    // Left a field (e.g. Tab to a button) with the mouse already gone: that was the only thing holding it open.
+    if (shown && !sticky && !typing() && !hovered()) hide();
+  }
 });
 chrome.runtime.onMessage.addListener((msg) => {
   if (msg === "toggle-panel") toggle();

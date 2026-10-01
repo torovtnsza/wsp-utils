@@ -2,6 +2,19 @@ import { state } from "./pageState";
 import { WPP } from "./wpp";
 
 const openedAt = Math.floor(Date.now() / 1000); // msg.t is in seconds
+const replied = new Map<string, number[]>(); // chat -> when we auto-replied to others there lately
+
+// Someone spamming a command can't make you send more than rate.count replies per chat every
+// rate.minutes; bursts of automated messages are what get accounts banned.
+function allowed(chat: string) {
+  const { count, minutes } = state.rate;
+  const now = Date.now();
+  const recent = (replied.get(chat) ?? []).filter((t) => now - t < minutes * 60_000);
+  const ok = recent.length < count;
+  if (ok) recent.push(now);
+  replied.set(chat, recent);
+  return ok;
+}
 
 // Every chat, including commands you send yourself (from here or your phone).
 export function startAutorespond() {
@@ -14,6 +27,7 @@ export function startAutorespond() {
     // Our own auto-reply; stops !a -> !a loops.
     // ponytail: you can't trigger a command that's also another command's reply; track sent ids if needed
     if (msg.id.fromMe && Object.values(state.commands).includes(text)) return;
+    if (!msg.id.fromMe && !allowed(chat)) return; // your own commands always run
     const reply = state.commands[text];
     const file = state.files[text];
     (file

@@ -2,7 +2,7 @@
 // content.ts pushes state here over window.postMessage and we post sent ids back.
 import type { State } from "./types";
 
-export let state: State = { commands: {}, files: {}, scheduled: [], colors: {} };
+export let state: State = { commands: {}, files: {}, scheduled: [], colors: {}, rate: { count: 5, minutes: 10 } };
 const listeners: (() => void)[] = [];
 export const onStateChange = (fn: () => void) => listeners.push(fn);
 export const markSent = (id: string) => window.postMessage({ wspSent: id }, location.origin);

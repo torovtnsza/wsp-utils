@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- A speech bubble with clock hands, in the panel's look: dark glass, neon cyan border, colorful accents. -->
+  <defs>
+    <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a3038"/>
+      <stop offset="1" stop-color="#0e1013"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <path d="M32.1 90.9A48 43 0 1 1 50.6 99.5L33 115Z" fill="url(#glass)" stroke="#3ee6ff" stroke-width="7" stroke-linejoin="round" filter="url(#glow)"/>
+  <g stroke-width="7" stroke-linecap="round" filter="url(#glow)">
+    <path d="M62 58 80 27" stroke="#ff5fa2"/>
+    <path d="M62 58 84 79" stroke="#ff9f43"/>
+  </g>
+  <circle cx="62" cy="58" r="5" fill="#5cf2a0"/>
+</svg>

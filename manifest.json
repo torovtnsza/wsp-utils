@@ -5,7 +5,11 @@
   "description": "Schedule messages and handle commands on WhatsApp Web.",
   "permissions": ["storage", "unlimitedStorage"],
   "host_permissions": ["https://web.whatsapp.com/*"],
-  "action": { "default_title": "Open the wsp-utils panel" },
+  "icons": { "16": "icons/icon16.png", "32": "icons/icon32.png", "48": "icons/icon48.png", "128": "icons/icon128.png" },
+  "action": {
+    "default_title": "Open the wsp-utils panel",
+    "default_icon": { "16": "icons/icon16.png", "32": "icons/icon32.png" }
+  },
   "background": { "service_worker": "dist/background.js" },
   "web_accessible_resources": [{ "resources": ["dist/popup.html"], "matches": ["https://web.whatsapp.com/*"] }],
   "content_scripts": [

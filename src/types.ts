@@ -11,4 +11,5 @@ export interface State {
   files: Record<string, { name: string; data: string; gif?: boolean }>; // command -> attached file as a data: URL; gif = send video as looping GIF
   scheduled: Scheduled[];
   colors: Record<string, number>; // command -> row color, like Scheduled.color
+  rate: { count: number; minutes: number }; // at most count auto-replies per chat every minutes (to others; yours always run)
 }

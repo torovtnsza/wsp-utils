@@ -75,7 +75,7 @@ function fill(list: HTMLElement, rows: HTMLLIElement[]) {
 const byTime = (a: Scheduled, b: Scheduled) => a.at - b.at; // first to be sent on top
 
 async function render() {
-  const { commands, files, scheduled, colors } = await getState();
+  const { commands, files, scheduled, colors, rate } = await getState();
   fill(
     $("sched"),
     [...scheduled].sort(byTime).map((s, i) =>
@@ -96,6 +96,11 @@ async function render() {
       });
     })
   );
+  // Re-renders also come from the scheduler sending; don't overwrite a limit you're typing.
+  if (!rForm.contains(document.activeElement)) {
+    $("rCount").value = String(rate.count);
+    $("rMins").value = String(rate.minutes);
+  }
   rendered = true;
 }
 
@@ -123,6 +128,15 @@ $("sForm").onsubmit = async (e) => {
   form.reset();
   bump(form.closest("section")!);
 };
+
+// Saved on Enter (the handler above) or when you leave a field.
+const rForm = document.getElementById("rForm") as HTMLFormElement;
+rForm.onsubmit = async (e) => {
+  e.preventDefault();
+  await setState({ rate: { count: +$("rCount").value, minutes: +$("rMins").value } });
+  bump(rForm);
+};
+$("rCount").onchange = $("rMins").onchange = () => rForm.requestSubmit();
 
 const readDataUrl = (f: File) =>
   new Promise<string>((ok) => {
@@ -178,12 +192,20 @@ if (embedded) {
   document.documentElement.classList.add("embed");
   addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
-      document.querySelectorAll("form").forEach((f) => f.reset());
+      document.querySelectorAll<HTMLFormElement>("section form").forEach((f) => f.reset()); // not the rate limit: it's saved
       $("file").setCustomValidity("");
       parent.postMessage({ wspClose: true }, "*");
     }
     if (e.altKey && e.code === "KeyW") parent.postMessage({ wspToggle: true }, "*");
   });
+  // While a text field has focus the panel stays open with the mouse outside. Read once focus has
+  // settled, so tabbing from one field to the next doesn't count as leaving.
+  const editing = () =>
+    setTimeout(() =>
+      parent.postMessage({ wspEditing: !!document.activeElement?.matches("input:not([type=checkbox]), textarea") }, "*")
+    );
+  addEventListener("focusin", editing);
+  addEventListener("focusout", editing);
   // The whole panel leans toward the cursor too, but the page only sees the mouse through us.
   addEventListener("pointermove", (e) =>
     parent.postMessage({ wspTilt: [e.clientX / innerWidth, e.clientY / innerHeight] }, "*")
