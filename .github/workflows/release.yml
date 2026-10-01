@@ -1,0 +1,43 @@
+# Pushing a version tag (git tag v0.2.0 && git push origin v0.2.0) builds the extension and
+# publishes a GitHub Release with a ready-to-load zip, so users don't need Node to install it.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write # create the release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: lts/*
+          cache: npm
+
+      # Chrome reads the version from the manifest, so a tag that doesn't match would ship a
+      # zip that calls itself something else.
+      - name: Check the tag matches manifest.json
+        run: |
+          version=$(node -p "require('./manifest.json').version")
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME doesn't match manifest.json version $version"
+            exit 1
+          fi
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+
+      # Only what the browser loads; also what the Chrome Web Store takes.
+      - name: Zip
+        run: zip -r "wsp-utils-$GITHUB_REF_NAME.zip" manifest.json dist icons LICENSE
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" "wsp-utils-$GITHUB_REF_NAME.zip" --title "$GITHUB_REF_NAME" --generate-notes

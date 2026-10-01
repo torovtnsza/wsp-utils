@@ -15,7 +15,17 @@
 
 ## Install
 
-There's no store release yet; load it from source. You need [Node.js](https://nodejs.org) and Chrome (or any Chromium browser: Edge, Brave…).
+It isn't in the Chrome Web Store yet, so you load it in developer mode. Works in Chrome and any Chromium browser (Brave, Edge, Opera…).
+
+1. Download `wsp-utils-vX.Y.Z.zip` from the [latest release](https://github.com/torovtnsza/wsp-utils/releases/latest) and unzip it somewhere it can stay. The browser runs the extension from that folder, so moving or deleting it removes the extension.
+2. Open `chrome://extensions` (`brave://extensions`, `edge://extensions`…) and turn on **Developer mode**.
+3. Click **Load unpacked** and pick the unzipped folder (the one with `manifest.json`).
+
+**Updating:** there are no automatic updates. Download the new zip, replace the folder's contents, and press the reload button on the extension's card in `chrome://extensions`. Your commands and scheduled messages are kept.
+
+### From source
+
+Needs [Node.js](https://nodejs.org), only to build:
 
 ```sh
 git clone https://github.com/torovtnsza/wsp-utils.git
@@ -24,9 +34,7 @@ npm install
 npm run build
 ```
 
-Then open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked** and pick the `wsp-utils` folder (the one with `manifest.json`).
-
-After pulling changes, run `npm run build` again and press the reload button on the extension's card.
+Then load the `wsp-utils` folder as above. After pulling changes, run `npm run build` again and reload the extension.
 
 ## Usage
 
@@ -78,6 +86,17 @@ Hover the panel's bottom-right corner to reveal it. By default each chat gets at
 | [`src/background.ts`](src/background.ts) | The toolbar button. |
 
 `npm run typecheck` checks the types; `npm run build` bundles everything into `dist/`.
+
+### Releasing
+
+Bump `version` in [`manifest.json`](manifest.json), commit, then tag and push:
+
+```sh
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+The [Release workflow](.github/workflows/release.yml) builds the extension and publishes a GitHub Release with the zip. It fails if the tag doesn't match the manifest's version.
 
 ## License
 
