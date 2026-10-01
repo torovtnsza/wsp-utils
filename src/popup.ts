@@ -74,15 +74,33 @@ function fill(list: HTMLElement, rows: HTMLLIElement[]) {
 
 const byTime = (a: Scheduled, b: Scheduled) => a.at - b.at; // first to be sent on top
 
+// Only WhatsApp's page knows the chats; panel.ts passes the question on to it.
+let asked = 0;
+function chatExists(name: string) {
+  if (!embedded) return Promise.resolve(true); // no WhatsApp to ask; the scheduler will report it
+  const id = ++asked;
+  return new Promise<boolean>((ok) => {
+    const answer = (e: MessageEvent) => {
+      if (e.source !== parent || e.data?.wspFoundChat?.id !== id) return;
+      removeEventListener("message", answer);
+      ok(e.data.wspFoundChat.found);
+    };
+    addEventListener("message", answer);
+    parent.postMessage({ wspFindChat: { id, name } }, "*");
+  });
+}
+
 async function render() {
   const { commands, files, scheduled, colors, rate } = await getState();
   fill(
     $("sched"),
-    [...scheduled].sort(byTime).map((s, i) =>
-      row(s.id, new Date(s.at).toLocaleString(), `${s.chat}: ${s.text}`, cssColor(colorAt(s.color, i)), () =>
+    [...scheduled].sort(byTime).map((s, i) => {
+      const li = row(s.id, new Date(s.at).toLocaleString(), `${s.chat}: ${s.text}`, cssColor(colorAt(s.color, i)), () =>
         setState({ scheduled: scheduled.filter((x) => x.id !== s.id) })
-      )
-    )
+      );
+      li.classList.toggle("sent", !!s.sent);
+      return li;
+    })
   );
   fill(
     $("cmds"),
@@ -112,11 +130,15 @@ for (const f of document.forms)
     f.requestSubmit();
   };
 
+// A chat that isn't there glows red until you edit it; nothing gets scheduled to it.
+$("chat").oninput = () => $("chat").removeAttribute("aria-invalid");
+
 $("sForm").onsubmit = async (e) => {
   e.preventDefault();
   const form = e.target as HTMLFormElement;
+  const [chat, text, at] = [$("chat").value, $("text").value, new Date($("at").value).getTime()];
+  if (!(await chatExists(chat))) return $("chat").setAttribute("aria-invalid", "true");
   const { scheduled } = await getState();
-  const at = new Date($("at").value).getTime();
   // It lands by time, not at the bottom, so skip ahead in the cycle past its new neighbors' colors.
   const shown = [...scheduled].sort(byTime);
   let pos = shown.findIndex((s) => s.at > at); // where it will show; ties go after
@@ -124,7 +146,7 @@ $("sForm").onsubmit = async (e) => {
   const near = [pos - 1, pos].filter((i) => shown[i]).map((i) => colorAt(shown[i].color, i));
   let color = nextColor(scheduled.map((s) => s.color));
   while (near.includes(color)) color = (color + 1) % ROW_COLORS.length;
-  await setState({ scheduled: [...scheduled, { id: crypto.randomUUID(), chat: $("chat").value, text: $("text").value, at, color }] });
+  await setState({ scheduled: [...scheduled, { id: crypto.randomUUID(), chat, text, at, color }] });
   form.reset();
   bump(form.closest("section")!);
 };
@@ -194,6 +216,7 @@ if (embedded) {
     if (e.key === "Escape") {
       document.querySelectorAll<HTMLFormElement>("section form").forEach((f) => f.reset()); // not the rate limit: it's saved
       $("file").setCustomValidity("");
+      $("chat").removeAttribute("aria-invalid");
       parent.postMessage({ wspClose: true }, "*");
     }
     if (e.altKey && e.code === "KeyW") parent.postMessage({ wspToggle: true }, "*");

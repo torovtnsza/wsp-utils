@@ -4,6 +4,7 @@ export interface Scheduled {
   text: string;
   at: number; // epoch ms
   color?: number; // row color, an index into popup.ts's ROW_COLORS; missing on items from before colors were saved
+  sent?: boolean; // already sent; kept in the list until you delete it
 }
 
 export interface State {

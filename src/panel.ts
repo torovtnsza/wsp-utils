@@ -170,11 +170,16 @@ addEventListener("message", (e) => {
   if (e.data?.wspClose) hide();
   if (e.data?.wspToggle) toggle();
   if (e.data?.wspTilt) tilt(e.data.wspTilt);
+  if (e.data?.wspFindChat) window.postMessage(e.data, location.origin); // only the page world knows the chats (scheduler.ts)
   if (typeof e.data?.wspEditing === "boolean") {
     editing = e.data.wspEditing;
     // Left a field (e.g. Tab to a button) with the mouse already gone: that was the only thing holding it open.
     if (shown && !sticky && !typing() && !hovered()) hide();
   }
+});
+// ...and its answer goes back to the panel.
+addEventListener("message", (e) => {
+  if (e.source === window && e.data?.wspFoundChat) frame.contentWindow?.postMessage(e.data, new URL(frame.src).origin);
 });
 chrome.runtime.onMessage.addListener((msg) => {
   if (msg === "toggle-panel") toggle();

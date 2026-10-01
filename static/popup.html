@@ -43,6 +43,7 @@
     width: 100%; padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px;
     background: rgb(0 0 0 / .25); color: inherit; font: inherit; transition: border-color .15s, box-shadow .15s;
   }
+  #chat[aria-invalid=true] { color: var(--danger); text-shadow: 0 0 6px rgb(255 92 138 / .55) }
   input::placeholder, textarea::placeholder { color: rgb(155 161 168 / .7) }
   input:focus-visible, textarea:focus-visible { outline: none; border-color: var(--tone); box-shadow: 0 0 0 3px color-mix(in srgb, var(--tone) 20%, transparent) }
   button:focus-visible { outline: 2px solid var(--tone); outline-offset: 2px }
@@ -64,6 +65,10 @@
   /* Hovering × marks the whole row for deletion; the separators that would cut through its outline hide. */
   li:has(.del:hover) { background: rgb(255 92 138 / .07); box-shadow: inset 0 0 0 1px rgb(255 92 138 / .5), 0 0 14px rgb(255 92 138 / .3) }
   li:has(.del:hover)::after, li:has(.del:hover) + li::after { opacity: 0 }
+  /* Sent messages stay listed, outlined in green; hovering × only makes the green stronger. */
+  li.sent { background: rgb(92 242 160 / .05); box-shadow: inset 0 0 0 1px rgb(92 242 160 / .35), 0 0 12px rgb(92 242 160 / .18) }
+  li.sent:has(.del:hover) { background: rgb(92 242 160 / .1); box-shadow: inset 0 0 0 1px rgb(92 242 160 / .7), 0 0 18px rgb(92 242 160 / .4) }
+  li.sent::after, li.sent + li::after { opacity: 0 }
   li > div { position: relative; flex: 1; min-width: 0; padding-left: 11px }
   li > div::before { content: ""; position: absolute; inset: 2px auto 2px 0; width: 3px; border-radius: 999px; background: var(--row); box-shadow: 0 0 8px var(--row) }
   li strong { display: block; font-weight: 600; font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
@@ -71,6 +76,7 @@
   /* As tall as the row's text, so it's an easy target without crowding the separators. */
   .del { flex: none; align-self: stretch; width: 56px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-size: 16px; line-height: 1; cursor: pointer; transition: color .2s }
   .del:hover { color: var(--danger) }
+  .sent .del:hover { color: var(--green) }
   /* Rate limit: tucked into the bottom-right corner, shown only while hovered or being edited. */
   .rate { display: flex; justify-content: flex-end; align-items: center; gap: 5px; margin-top: -4px; color: var(--muted); font-size: 11px; opacity: 0; transition: opacity .3s }
   .rate:hover, .rate:focus-within { opacity: 1 }
