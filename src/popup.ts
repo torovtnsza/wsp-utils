@@ -234,6 +234,18 @@ $("close").onclick = () => (embedded ? parent.postMessage({ wspClose: true }, "*
 
 if (embedded) {
   document.documentElement.classList.add("embed");
+  // The panel is sliding out: settle the cards' tilt and row highlights at once instead of
+  // animating them, so the contents don't redraw every frame of the slide.
+  addEventListener("message", (e) => {
+    if (e.source !== parent || !e.data?.wspHiding) return;
+    const html = document.documentElement;
+    html.classList.add("hiding");
+    for (const s of document.querySelectorAll("section")) {
+      s.style.removeProperty("--rx");
+      s.style.removeProperty("--ry");
+    }
+    setTimeout(() => html.classList.remove("hiding"), 300); // out of sight by then
+  });
   addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       document.querySelectorAll<HTMLFormElement>("section form").forEach((f) => f.reset()); // not the rate limit: it's saved

@@ -26,7 +26,9 @@ style.textContent = `
     position: absolute; top: 16px; left: 64px; width: 400px; height: calc(100% - 32px); /* until layout() fits it over the chat list */
     padding-left: ${MARGIN}px; visibility: hidden; pointer-events: none;
     transform: translateX(calc(-100% - var(--left, 64px))); /* parked behind the line */
-    transition: transform .25s cubic-bezier(.5, 0, .75, 0), visibility 0s .25s;
+    will-change: transform; /* its own layer, so sliding doesn't repaint it */
+    /* Slides out exactly as it slides in (below), just the other way. */
+    transition: transform .3s cubic-bezier(.2, .8, .2, 1), visibility 0s .3s;
   }
   #wsp-panel.open {
     visibility: visible; pointer-events: auto; transform: none;
@@ -122,8 +124,10 @@ function tilt(p?: [number, number]) {
   frame.style.setProperty("--ry", p ? `${(p[0] - 0.5) * 2 * TILT}deg` : "");
 }
 
+const toFrame = (data: unknown) => frame.contentWindow?.postMessage(data, new URL(frame.src).origin);
+
 function hide() {
-  tilt();
+  toFrame({ wspHiding: true }); // freeze the contents, so only the slide moves
   shown = sticky = false;
   panel.classList.remove("open");
   zone.classList.remove("open");
@@ -138,9 +142,13 @@ const hovered = () => zone.matches(":hover") || panel.matches(":hover");
 function leave(e: MouseEvent) {
   const to = e.relatedTarget as Node | null;
   if (to && (to === zone || panel.contains(to))) return; // moving between the two
-  tilt();
   if (shown && !sticky && !typing()) hide();
+  else tilt();
 }
+// Lies flat again once out of sight, instead of animating the tilt during the slide.
+panel.addEventListener("transitionend", (e) => {
+  if (e.target === panel && !shown) tilt(); // not the frame's own tilt ending
+});
 
 zone.addEventListener("mouseenter", show);
 zone.addEventListener("mouseleave", leave);
@@ -188,7 +196,7 @@ addEventListener("message", (e) => {
 });
 // ...and its answer goes back to the panel.
 addEventListener("message", (e) => {
-  if (e.source === window && e.data?.wspFoundChat) frame.contentWindow?.postMessage(e.data, new URL(frame.src).origin);
+  if (e.source === window && e.data?.wspFoundChat) toFrame(e.data);
 });
 chrome.runtime.onMessage.addListener((msg) => {
   if (msg === "toggle-panel") toggle();

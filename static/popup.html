@@ -31,6 +31,7 @@
     box-shadow: inset 0 1px 0 rgb(255 255 255 / .06), 0 8px 24px rgb(0 0 0 / .35);
     transition: border-color .2s, box-shadow .2s, transform .3s ease-out;
   }
+  .hiding *, .hiding *::after { transition: none !important } /* sliding out: see popup.ts */
   section:nth-of-type(2) { --tone: var(--orange) }
   section:focus-within {
     border-color: color-mix(in srgb, var(--tone) 50%, transparent);
