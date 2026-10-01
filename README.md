@@ -45,7 +45,7 @@ Open [web.whatsapp.com](https://web.whatsapp.com) and log in.
 | How | Closes when |
 | --- | --- |
 | Hover the grey line in the empty middle of WhatsApp's left icon bar | The mouse leaves the panel (unless you're typing in a field) |
-| <kbd>Alt</kbd>+<kbd>W</kbd> | You click outside it, or press <kbd>Alt</kbd>+<kbd>W</kbd> again |
+| <kbd>Alt</kbd>+<kbd>W</kbd> (changeable, see below) | You click outside it, or press the shortcut again |
 | The extension's toolbar button (opens WhatsApp Web if it isn't open) | You click outside it |
 
 From any of them, the thin red line at the top closes it, and <kbd>Esc</kbd> closes it **and clears what you typed**.
@@ -63,6 +63,10 @@ Type the trigger (`!ping`) and the reply, then press <kbd>Enter</kbd> (<kbd>Shif
 
 - A command fires when **anyone** sends exactly that text, in any chat (groups included), and also when you send it yourself, from WhatsApp Web or your phone.
 - To send a GIF, attach it as an MP4 and tick **Send video as GIF**. The panel has a link and an ffmpeg command for converting `.gif` files.
+
+### Shortcut
+
+Hover the panel's bottom-left corner to reveal it. Click the field and press the new shortcut. It needs <kbd>Ctrl</kbd>, <kbd>Alt</kbd> or <kbd>⊞</kbd>/<kbd>⌘</kbd>, or an F key, so it doesn't fire while you type. <kbd>Esc</kbd> cancels and <kbd>Backspace</kbd> restores <kbd>Alt</kbd>+<kbd>W</kbd>.
 
 ### Rate limit
 

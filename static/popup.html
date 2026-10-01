@@ -77,10 +77,14 @@
   .del { flex: none; align-self: stretch; width: 56px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-size: 16px; line-height: 1; cursor: pointer; transition: color .2s }
   .del:hover { color: var(--danger) }
   .sent .del:hover { color: var(--green) }
-  /* Rate limit: tucked into the bottom-right corner, shown only while hovered or being edited. */
-  .rate { display: flex; justify-content: flex-end; align-items: center; gap: 5px; margin-top: -4px; color: var(--muted); font-size: 11px; opacity: 0; transition: opacity .3s }
-  .rate:hover, .rate:focus-within { opacity: 1 }
-  .rate input:not([type=checkbox]) { width: calc(3ch + 12px); padding: 2px 4px; border-radius: 6px; text-align: center; appearance: textfield }
+  /* Settings tucked into the bottom corners (shortcut left, rate limit right), each shown only while hovered or being edited. */
+  footer { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: -4px; color: var(--muted); font-size: 11px }
+  footer > * { display: flex; align-items: center; gap: 5px; white-space: nowrap; opacity: 0; transition: opacity .3s }
+  footer > :last-child { margin-left: auto } /* stays right, even on its own line when the panel is narrow */
+  footer > :hover, footer > :focus-within { opacity: 1 }
+  footer input:not([type=checkbox]) { padding: 2px 4px; border-radius: 6px; text-align: center }
+  #hotkey { width: 13ch; cursor: pointer; caret-color: transparent }
+  .rate input { width: calc(3ch + 12px); appearance: textfield }
   .rate input::-webkit-inner-spin-button { appearance: none }
 </style>
 <button id="close" aria-label="Close" title="Close"></button>
@@ -105,8 +109,13 @@
   </form>
   <ul id="cmds" data-empty="No commands yet. Add a trigger like !ping above."></ul>
 </section>
-<form id="rForm" class="rate" title="Limits auto-replies to other people. Your own commands always run.">
-  Auto-replies: max <input id="rCount" type="number" required min="1" max="999" aria-label="Replies per chat">
-  per chat / <input id="rMins" type="number" required min="1" max="1440" aria-label="Minutes"> min
-</form>
+<footer>
+  <label title="Click, then press a new shortcut (with Ctrl, Alt or ⊞/⌘, or an F key). Backspace restores Alt+W.">
+    Shortcut <input id="hotkey" readonly>
+  </label>
+  <form id="rForm" class="rate" title="Limits auto-replies to other people. Your own commands always run.">
+    Auto-replies: max <input id="rCount" type="number" required min="1" max="999" aria-label="Replies per chat">
+    per chat / <input id="rMins" type="number" required min="1" max="1440" aria-label="Minutes"> min
+  </form>
+</footer>
 <script src="popup.js"></script>

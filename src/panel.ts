@@ -1,7 +1,11 @@
 // The popup page as a panel that slides out of WhatsApp's left icon rail. Opens on hovering the
-// empty middle of the rail (marked by a grey line, neon while open), on Alt+W, or from the toolbar
+// empty middle of the rail (marked by a grey line, neon while open), on a shortcut (Alt+W unless
+// changed in the panel), or from the toolbar
 // button (background.ts).
 // Runs in the isolated world (content.ts); the popup page does its own storage.
+import { comboOf, DEFAULT_HOTKEY } from "./hotkey";
+import { getState } from "./storage";
+
 const ICON = "button,a,input,img,[role=button],[role=link],[role=tab]";
 const MARGIN = 24; // between the panel and each side of the chat list
 const TILT = 2; // degrees the panel leans toward the cursor
@@ -53,7 +57,7 @@ document.head.append(style);
 document.body.append(zone, clip);
 
 let shown = false;
-let sticky = false; // opened from Alt+W or the toolbar: stays open until a click outside or Escape
+let sticky = false; // opened from the shortcut or the toolbar: stays open until a click outside or Escape
 let editing = false; // a text field in the panel has focus (popup.ts reports it)
 
 // WhatsApp's class names are obfuscated, so the rail is found by shape: the narrow full-height
@@ -129,7 +133,7 @@ function hide() {
 const typing = () => editing && document.activeElement === frame;
 const hovered = () => zone.matches(":hover") || panel.matches(":hover");
 
-// Mouse leaving zone + panel closes it, unless it was opened from Alt+W / the toolbar or you're in a
+// Mouse leaving zone + panel closes it, unless it was opened from the shortcut / the toolbar or you're in a
 // text field: then click outside or Escape.
 function leave(e: MouseEvent) {
   const to = e.relatedTarget as Node | null;
@@ -158,9 +162,14 @@ function toggle() {
   else openFocused();
 }
 
+let hotkey = DEFAULT_HOTKEY;
+const loadHotkey = async () => void (hotkey = (await getState()).hotkey);
+loadHotkey();
+chrome.storage.onChanged.addListener(loadHotkey);
+
 // Capture phase, so WhatsApp's own key handlers can't swallow it. Inside the panel, popup.ts posts these.
 addEventListener("keydown", (e) => {
-  if (e.altKey && e.code === "KeyW") {
+  if (comboOf(e) === hotkey) {
     e.preventDefault();
     toggle();
   } else if (e.key === "Escape" && shown) hide();

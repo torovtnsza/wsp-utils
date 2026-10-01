@@ -1,3 +1,4 @@
+import { comboOf, DEFAULT_HOTKEY, label, usable } from "./hotkey";
 import { getState, setState } from "./storage";
 import type { Scheduled } from "./types";
 
@@ -91,7 +92,7 @@ function chatExists(name: string) {
 }
 
 async function render() {
-  const { commands, files, scheduled, colors, rate } = await getState();
+  const { commands, files, scheduled, colors, rate, hotkey: saved } = await getState();
   fill(
     $("sched"),
     [...scheduled].sort(byTime).map((s, i) => {
@@ -119,6 +120,8 @@ async function render() {
     $("rCount").value = String(rate.count);
     $("rMins").value = String(rate.minutes);
   }
+  hotkey = saved;
+  if (document.activeElement !== hk) hk.value = label(hotkey);
   rendered = true;
 }
 
@@ -160,6 +163,25 @@ rForm.onsubmit = async (e) => {
 };
 $("rCount").onchange = $("rMins").onchange = () => rForm.requestSubmit();
 
+// The panel's shortcut: click the field, then press the new one. Escape cancels; Backspace
+// restores the default.
+let hotkey = DEFAULT_HOTKEY;
+const hk = $("hotkey");
+hk.onfocus = () => (hk.value = "Press keys…");
+hk.onblur = () => (hk.value = label(hotkey));
+hk.onkeydown = async (e) => {
+  if (e.key === "Tab" || e.isComposing) return;
+  e.preventDefault();
+  e.stopPropagation(); // neither Escape closing the panel nor the current shortcut toggling it
+  if (e.key === "Escape") return hk.blur();
+  const combo = e.key === "Backspace" ? DEFAULT_HOTKEY : comboOf(e);
+  if (!usable(combo)) return; // a modifier alone, or a key that would fire while typing; keep listening
+  hotkey = combo;
+  hk.blur();
+  await setState({ hotkey });
+  bump(hk);
+};
+
 const readDataUrl = (f: File) =>
   new Promise<string>((ok) => {
     const r = new FileReader();
@@ -190,7 +212,7 @@ $("cForm").onsubmit = async (e) => {
   bump(form.closest("section")!);
 };
 
-// Also shown inside WhatsApp as the hover panel (panel.ts); Escape / Alt+W there go to it.
+// Also shown inside WhatsApp as the hover panel (panel.ts); Escape and the shortcut there go to it.
 // Escape also discards what was typed.
 // Cards lean toward the cursor, up to TILT degrees each way.
 const TILT = 2.5;
@@ -219,7 +241,7 @@ if (embedded) {
       $("chat").removeAttribute("aria-invalid");
       parent.postMessage({ wspClose: true }, "*");
     }
-    if (e.altKey && e.code === "KeyW") parent.postMessage({ wspToggle: true }, "*");
+    if (comboOf(e) === hotkey) parent.postMessage({ wspToggle: true }, "*");
   });
   // While a text field has focus the panel stays open with the mouse outside. Read once focus has
   // settled, so tabbing from one field to the next doesn't count as leaving.
