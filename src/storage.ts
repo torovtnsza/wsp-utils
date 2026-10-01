@@ -1,6 +1,6 @@
 import type { State } from "./types";
 
-const defaults: State = { commands: { "!ping": "pong🏓" }, files: {}, scheduled: [] };
+const defaults: State = { commands: { "!ping": "pong🏓" }, files: {}, scheduled: [], colors: {} };
 
 export async function getState(): Promise<State> {
   return { ...defaults, ...(await chrome.storage.local.get()) };

@@ -2,7 +2,7 @@
   "name": "wsp-utils",
   "private": true,
   "scripts": {
-    "build": "esbuild src/content.ts src/main.ts src/popup.ts --bundle --outdir=dist && node -e \"require('fs').copyFileSync('static/popup.html','dist/popup.html')\"",
+    "build": "esbuild src/background.ts src/content.ts src/main.ts src/popup.ts --bundle --outdir=dist && node -e \"require('fs').copyFileSync('static/popup.html','dist/popup.html')\"",
     "typecheck": "tsc"
   },
   "devDependencies": {

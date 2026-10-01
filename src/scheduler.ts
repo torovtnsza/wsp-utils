@@ -1,6 +1,7 @@
 import { markSent, onStateChange, state } from "./pageState";
 import { WPP } from "./wpp";
 
+const SELF = /^\s*(me|yo|you)\s*$/i; // your own "Message yourself" chat, whatever its title
 const MAX_DELAY = 2 ** 31 - 1; // setTimeout overflows past ~24.8 days and fires immediately
 const sent = new Set<string>(); // storage removal is async; don't resend while it catches up
 let timer: ReturnType<typeof setTimeout> | undefined;
@@ -14,9 +15,9 @@ async function sendDue() {
   let ok = true;
   for (const s of due) {
     try {
-      const chat = chats.find((c) => c.formattedTitle === s.chat);
-      if (!chat) throw new Error(`No chat named "${s.chat}"`);
-      await WPP.chat.sendTextMessage(chat.id, s.text);
+      const id = SELF.test(s.chat) ? WPP.conn.getMyUserId() : chats.find((c) => c.formattedTitle === s.chat)?.id;
+      if (!id) throw new Error(`No chat named "${s.chat}"`);
+      await WPP.chat.sendTextMessage(id, s.text);
       sent.add(s.id);
       markSent(s.id);
     } catch (e) {
