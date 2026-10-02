@@ -27,8 +27,8 @@ style.textContent = `
     padding-left: ${MARGIN}px; visibility: hidden; pointer-events: none;
     transform: translateX(calc(-100% - var(--left, 64px))); /* parked behind the line */
     will-change: transform; /* its own layer, so sliding doesn't repaint it */
-    /* Slides out exactly as it slides in (below), just the other way. */
-    transition: transform .3s cubic-bezier(.2, .8, .2, 1), visibility 0s .3s;
+    /* Slides out slow-fast-slow; in (below) starts fast and eases into place. */
+    transition: transform .3s cubic-bezier(.65, 0, .35, 1), visibility 0s .3s;
   }
   #wsp-panel.open {
     visibility: visible; pointer-events: auto; transform: none;
@@ -61,6 +61,7 @@ document.body.append(zone, clip);
 let shown = false;
 let sticky = false; // opened from the shortcut or the toolbar: stays open until a click outside or Escape
 let editing = false; // a text field in the panel has focus (popup.ts reports it)
+let overshot = false; // the mouse left past the line's left edge (see the mousemove listener)
 
 // WhatsApp's class names are obfuscated, so the rail is found by shape: the narrow full-height
 // column under the (empty) middle of the left edge.
@@ -128,7 +129,7 @@ const toFrame = (data: unknown) => frame.contentWindow?.postMessage(data, new UR
 
 function hide() {
   toFrame({ wspHiding: true }); // freeze the contents, so only the slide moves
-  shown = sticky = false;
+  shown = sticky = overshot = false;
   panel.classList.remove("open");
   zone.classList.remove("open");
   if (document.activeElement === frame) frame.blur();
@@ -142,9 +143,22 @@ const hovered = () => zone.matches(":hover") || panel.matches(":hover");
 function leave(e: MouseEvent) {
   const to = e.relatedTarget as Node | null;
   if (to && (to === zone || panel.contains(to))) return; // moving between the two
+  if (e.clientX <= zone.getBoundingClientRect().left) overshot = true;
+  else close();
+}
+
+function close() {
   if (shown && !sticky && !typing()) hide();
   else tilt();
 }
+
+// Leaving to the left (the strip left of the line, or off the window's edge, even in fullscreen)
+// is just overshooting the line, so it stays open until the mouse comes back anywhere else.
+addEventListener("mousemove", (e) => {
+  if (!overshot || e.clientX <= zone.getBoundingClientRect().left) return; // still off to the left
+  overshot = false;
+  if (e.target !== zone && !panel.contains(e.target as Node)) close(); // back over WhatsApp, not the panel
+});
 // Lies flat again once out of sight, instead of animating the tilt during the slide.
 panel.addEventListener("transitionend", (e) => {
   if (e.target === panel && !shown) tilt(); // not the frame's own tilt ending

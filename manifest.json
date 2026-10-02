@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "wsp-utils",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Schedule messages and handle commands on WhatsApp Web.",
   "permissions": ["storage", "unlimitedStorage"],
   "host_permissions": ["https://web.whatsapp.com/*"],
